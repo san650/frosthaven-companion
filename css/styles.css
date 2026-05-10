@@ -149,6 +149,8 @@ body::before {
 
 button, input, textarea, select {
   font: inherit; color: inherit; background: none; border: none; margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
 }
 button { cursor: pointer; }
 a { color: var(--frost); text-decoration: none; }
@@ -604,14 +606,22 @@ a:hover { color: var(--frost-bright); }
 .level-cell:hover .level-cell__box {
   background: linear-gradient(180deg, rgba(255,250,235,0.85), rgba(180,150,100,0.32));
 }
+/* Active level — looks "pressed in". Flat linear-gradient (renders
+   reliably on iOS Safari, where some radial-gradient + CSS-var combos
+   paint flat), a strong top inset shadow + 1px Y-shift to read as
+   depressed, and a soft frost glow around the well to draw the eye. */
 .level-cell--active .level-cell__box {
-  background: radial-gradient(circle at 30% 25%, var(--frost-bright) 0%, var(--frost) 55%, var(--frost-deep) 100%);
-  color: var(--midnight);
+  background-color: #5a8eaf;
+  background-image: linear-gradient(180deg, #3d6e92 0%, #6fa6c4 100%);
+  color: #f5fbff;
+  transform: translateY(1px);
   box-shadow:
-    inset 0 0 0 1.5px rgba(40, 60, 80, 0.7),
-    inset 0 -1.5px 0 rgba(20, 40, 60, 0.4),
-    0 0 0 1.5px rgba(159, 207, 235, 0.35),
-    0 0 12px -2px rgba(159, 207, 235, 0.7);
+    inset 0 2px 4px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1.5px rgba(15, 30, 50, 0.7),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1.5px rgba(159, 207, 235, 0.32),
+    0 0 10px -2px rgba(159, 207, 235, 0.55);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 .level-cell--active .level-cell__xp { color: var(--ink); font-weight: 600; }
 

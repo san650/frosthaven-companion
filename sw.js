@@ -1,7 +1,7 @@
 // Cache-first service worker for the app shell.
 // Bump CACHE on releases to evict stale assets.
 
-const CACHE = 'frosthaven-companion-v6';
+const CACHE = 'frosthaven-companion-v7';
 
 const SHELL = [
   './',
