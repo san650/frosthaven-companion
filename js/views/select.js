@@ -35,7 +35,7 @@ const renderGroup = (heading, classes, modifierClass, indexOffset) => {
 
 const renderHero = (state) => {
   const hero = el('section', { class: 'select-hero' },
-    el('h1', { text: 'Frosthaven' }),
+    el('h1', { text: 'Frosthaven Companion' }),
     el('div', { class: 'rune' }, el('span', { text: 'Choose your destiny' })),
   );
   if (state.retired.length > 0) {

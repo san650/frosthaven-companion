@@ -8,11 +8,11 @@
 
 import { getClass } from '../data/classes.js';
 import { RESOURCES, getResource } from '../data/resources.js';
-import { LEVEL_XP, MAX_LEVEL } from '../data/xp-thresholds.js';
+import { LEVEL_XP, MAX_LEVEL, levelFromXp } from '../data/xp-thresholds.js';
 import { store } from '../store.js';
 import { makeCommand } from '../commands.js';
 import { el, svgEl } from '../dom.js';
-import { openNotesDrawer } from './notes-drawer.js';
+import { openActionsDrawer } from './actions-drawer.js';
 
 const goldResource = () => getResource('gold');
 const nonGoldResources = () => RESOURCES.filter((r) => r.id !== 'gold');
@@ -78,15 +78,23 @@ const renderName = (character) => {
 /* ---------------------------- LEVEL ROW ----------------------------- */
 
 const renderLevel = (character) => {
+  const earned = levelFromXp(character.xp);
   const cells = [];
   for (let lvl = 1; lvl <= MAX_LEVEL; lvl++) {
     const isActive = character.level === lvl;
+    const isLocked = character.xp < LEVEL_XP[lvl];
+
+    const classes = ['level-cell'];
+    if (isActive) classes.push('level-cell--active');
+    if (isLocked) classes.push('level-cell--locked');
+
     const cell = el('button', {
       type: 'button',
-      class: `level-cell${isActive ? ' level-cell--active' : ''}`,
-      'aria-label': `Level ${lvl}, requires ${LEVEL_XP[lvl]} XP`,
+      class: classes.join(' '),
+      'aria-label': `Level ${lvl}, requires ${LEVEL_XP[lvl]} XP${isLocked ? ' — locked' : ''}`,
       'aria-pressed': isActive ? 'true' : 'false',
       onClick: () => {
+        if (isLocked) return;
         store.dispatch(makeCommand('SET_LEVEL', {
           from: store.state.activeCharacter.level,
           to: lvl,
@@ -96,10 +104,11 @@ const renderLevel = (character) => {
       el('span', { class: 'level-cell__box', text: String(lvl) }),
       el('span', { class: 'level-cell__xp', text: String(LEVEL_XP[lvl]) }),
     );
+    if (isLocked && !isActive) cell.disabled = true;
     cells.push(cell);
   }
   return el('section', { class: 'sheet-section' },
-    el('div', { class: 'sheet-label', text: 'Level' }),
+    el('div', { class: 'sheet-label', text: `Level — earned ${earned}` }),
     el('div', { class: 'level-track', role: 'radiogroup', 'aria-label': 'Level' }, ...cells),
   );
 };
@@ -109,29 +118,27 @@ const renderLevel = (character) => {
 const STEP_DELTAS = [-10, -1, 1, 10];
 
 const renderStat = ({ kind, label, value, iconSvg, onDelta }) => {
-  const iconWrap = el('span', { class: 'stat-head__icon' });
+  const iconWrap = el('span', { class: 'stat-row__icon' });
   iconWrap.appendChild(svgEl(iconSvg));
-
-  const head = el('div', { class: 'stat-head' },
-    iconWrap,
-    el('span', { class: 'stat-head__label', text: label }),
-    el('span', { class: 'stat-head__value', text: String(value) }),
-  );
 
   const buttons = STEP_DELTAS.map((delta) => {
     const sign = delta > 0 ? '+' : '−';
-    const label = `${sign}${Math.abs(delta)}`;
+    const text = `${sign}${Math.abs(delta)}`;
     return el('button', {
       type: 'button',
       class: `stepper__btn${delta < 0 ? ' stepper__btn--neg' : ''}${Math.abs(delta) === 1 ? ' stepper__btn--minor' : ''}`,
       'aria-label': `${delta > 0 ? 'add' : 'subtract'} ${Math.abs(delta)}`,
-      text: label,
+      text,
       onClick: () => onDelta(delta),
     });
   });
 
   return el('section', { class: `sheet-section stat-row stat-row--${kind}` },
-    head,
+    el('div', { class: 'stat-row__head' },
+      iconWrap,
+      el('span', { class: 'stat-row__label', text: label }),
+      el('span', { class: 'stat-row__value', text: String(value) }),
+    ),
     el('div', { class: 'stepper' }, ...buttons),
   );
 };
@@ -192,15 +199,10 @@ const renderResource = (resource, value) => {
   });
 
   return el('div', { class: 'resource' },
-    el('div', { class: 'resource__head' },
-      iconWrap,
-      el('span', { class: 'resource__name', text: resource.name }),
-    ),
-    el('div', { class: 'resource__row' },
-      dec,
-      el('span', { class: 'resource__value', text: String(value) }),
-      inc,
-    ),
+    iconWrap,
+    el('span', { class: 'resource__name', text: resource.name }),
+    el('span', { class: 'resource__value', text: String(value) }),
+    el('div', { class: 'resource__btns' }, dec, inc),
   );
 };
 
@@ -208,7 +210,7 @@ const renderResources = (character) => {
   const grid = el('div', { class: 'resources' },
     ...nonGoldResources().map((r) => renderResource(r, character.resources[r.id] ?? 0)),
   );
-  return el('section', { class: 'sheet-section' },
+  return el('section', { class: 'sheet-section sheet-section--grow' },
     el('div', { class: 'sheet-label', text: 'Resources' }),
     grid,
   );
@@ -216,35 +218,18 @@ const renderResources = (character) => {
 
 /* ----------------------------- FOOTER ------------------------------- */
 
-const renderFooter = (retiredCount) => {
-  const notesBtn = el('button', {
+const renderFooter = () => {
+  const chevron = svgEl('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 L 12 4 L 21 11"/></svg>');
+
+  const tab = el('button', {
     type: 'button',
-    class: 'foot__btn foot__btn--notes',
-    text: 'Notes',
-    onClick: () => openNotesDrawer(),
+    class: 'actions-toggle',
+    'aria-label': 'Show actions: notes, retired, retire',
+    onClick: () => openActionsDrawer(),
   });
+  tab.appendChild(chevron);
 
-  const retiredLink = retiredCount > 0
-    ? el('a', {
-        href: '#/retired',
-        class: 'foot__btn foot__btn--retired',
-        text: `Retired (${retiredCount})`,
-      })
-    : null;
-
-  const retireBtn = el('button', {
-    type: 'button',
-    class: 'foot__btn foot__btn--retire',
-    text: 'Retire',
-    onClick: () => {
-      const name = store.state.activeCharacter.name || 'this character';
-      if (confirm(`Retire ${name}? They'll be archived and you can choose a new class.`)) {
-        store.retireActive();
-      }
-    },
-  });
-
-  return el('div', { class: 'foot' }, notesBtn, retiredLink, retireBtn);
+  return el('div', { class: 'foot' }, tab);
 };
 
 /* ----------------------------- ROOT --------------------------------- */
@@ -271,7 +256,7 @@ export const renderSheet = (root, state) => {
       renderGold(c),
       renderResources(c),
     ),
-    renderFooter(state.retired.length),
+    renderFooter(),
   );
 
   root.appendChild(view);

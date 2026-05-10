@@ -54,15 +54,25 @@ class Store {
   async #hydrate() {
     const persisted = await loadState();
     if (persisted) {
-      // Backfill any new resource IDs that didn't exist when the state
-      // was last saved, so a schema bump doesn't crash the UI.
-      if (persisted.activeCharacter) {
-        persisted.activeCharacter.resources = {
-          ...emptyResources(),
-          ...persisted.activeCharacter.resources,
-        };
+      // Two on-disk shapes are tolerated:
+      //   - legacy: the bare state object (activeCharacter + retired)
+      //   - current: { state, history } so undo carries across sessions
+      const isLegacy = 'activeCharacter' in persisted || 'retired' in persisted;
+      const state = isLegacy ? persisted : persisted.state;
+      const history = isLegacy ? null : persisted.history;
+
+      if (state) {
+        // Backfill any new resource IDs that didn't exist when the state
+        // was last saved, so a schema bump doesn't crash the UI.
+        if (state.activeCharacter) {
+          state.activeCharacter.resources = {
+            ...emptyResources(),
+            ...state.activeCharacter.resources,
+          };
+        }
+        this.state = state;
       }
-      this.state = persisted;
+      if (history) this.history.hydrate(history);
     }
     requestPersistence();
   }
@@ -78,7 +88,10 @@ class Store {
 
   async #persist() {
     try {
-      await saveState(this.state);
+      await saveState({
+        state: this.state,
+        history: this.history.serialize(),
+      });
     } catch (err) {
       console.error('Failed to persist state', err);
     }
@@ -108,6 +121,50 @@ class Store {
     };
     this.history.clear();
     this.#persist();
+    this.#notify();
+  }
+
+  // --- backup / restore ---
+
+  // Returns a JSON-serialisable snapshot for "Export character" so the
+  // user has a copy of their data outside browser storage (iOS evicts
+  // IndexedDB on uninstalled PWAs after 7 days of inactivity).
+  exportState() {
+    return {
+      appName: 'frosthaven-companion',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      state: this.state,
+      history: this.history.serialize(),
+    };
+  }
+
+  // Replaces the live state with the contents of an exported snapshot.
+  // Tolerates the legacy bare-state shape and the current { state, history }
+  // wrapper. History is cleared on import (the imported workflow shouldn't
+  // bleed undo entries from another device).
+  async importState(payload) {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Backup file is empty or malformed.');
+    }
+    const incoming = payload.state ?? payload;
+    if (!incoming || typeof incoming !== 'object' ||
+        (!('activeCharacter' in incoming) && !('retired' in incoming))) {
+      throw new Error('File does not look like a Frosthaven backup.');
+    }
+    const next = {
+      activeCharacter: incoming.activeCharacter ?? null,
+      retired: Array.isArray(incoming.retired) ? incoming.retired : [],
+    };
+    if (next.activeCharacter) {
+      next.activeCharacter.resources = {
+        ...emptyResources(),
+        ...next.activeCharacter.resources,
+      };
+    }
+    this.state = next;
+    this.history.clear();
+    await this.#persist();
     this.#notify();
   }
 

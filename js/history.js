@@ -4,18 +4,28 @@
 // (e.g. typing into the name input) merge into one history entry so
 // undo reverses the whole edit, not letter-by-letter.
 //
-// History is in-memory only — closing the app clears it. The character
-// state itself is persisted to IndexedDB independently.
+// History is persisted alongside character state in IndexedDB so
+// undo works across sessions. Capped at MAX_ENTRIES past entries so
+// the persisted blob doesn't grow forever.
 
 import { coalesceKeyOf } from './commands.js';
 
 const COALESCE_WINDOW_MS = 700;
-const MAX_ENTRIES = 200;
+const MAX_ENTRIES = 100;
 
 export class History {
   constructor() {
     this.past = [];
     this.future = [];
+  }
+
+  hydrate({ past = [], future = [] } = {}) {
+    this.past = Array.isArray(past) ? past.slice(-MAX_ENTRIES) : [];
+    this.future = Array.isArray(future) ? future : [];
+  }
+
+  serialize() {
+    return { past: this.past, future: this.future };
   }
 
   record(cmd) {
