@@ -7,6 +7,7 @@ import { renderSheet } from './views/sheet.js';
 import { renderRetired } from './views/retired.js';
 import { renderPerks } from './views/perks.js';
 import { mountSnow } from './snow.js';
+import { notifyUndo, notifyRedo } from './toast.js';
 
 const root = document.getElementById('view');
 
@@ -41,12 +42,12 @@ const onKeyDown = (e) => {
     // clobber inline editing semantics.
     if (isEditableTarget(e)) return;
     e.preventDefault();
-    if (e.shiftKey) store.redo();
-    else store.undo();
+    if (e.shiftKey) notifyRedo(store.redo());
+    else notifyUndo(store.undo());
   } else if (e.key === 'y' || e.key === 'Y') {
     if (isEditableTarget(e)) return;
     e.preventDefault();
-    store.redo();
+    notifyRedo(store.redo());
   }
 };
 

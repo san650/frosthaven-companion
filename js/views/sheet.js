@@ -13,6 +13,7 @@ import { store } from '../store.js';
 import { makeCommand } from '../commands.js';
 import { el, svgEl } from '../dom.js';
 import { openActionsDrawer } from './actions-drawer.js';
+import { notifyUndo, notifyRedo } from '../toast.js';
 
 const goldResource = () => getResource('gold');
 const nonGoldResources = () => RESOURCES.filter((r) => r.id !== 'gold');
@@ -33,7 +34,7 @@ const renderTopbar = (cls) => {
     class: 'iconbtn',
     'aria-label': 'Undo',
     text: '↶',
-    onClick: () => store.undo(),
+    onClick: () => notifyUndo(store.undo()),
   });
   undoBtn.disabled = !store.canUndo();
 
@@ -42,7 +43,7 @@ const renderTopbar = (cls) => {
     class: 'iconbtn',
     'aria-label': 'Redo',
     text: '↷',
-    onClick: () => store.redo(),
+    onClick: () => notifyRedo(store.redo()),
   });
   redoBtn.disabled = !store.canRedo();
 

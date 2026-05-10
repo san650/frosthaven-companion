@@ -199,7 +199,7 @@ class Store {
 
   undo() {
     const cmd = this.history.popUndo();
-    if (!cmd) return;
+    if (!cmd) return null;
     const def = COMMANDS[cmd.type];
     const next = structuredClone(this.state);
     def.revert(next, cmd.payload);
@@ -207,11 +207,12 @@ class Store {
     this.history.pushFuture(cmd);
     this.#persist();
     this.#notify();
+    return cmd;
   }
 
   redo() {
     const cmd = this.history.popRedo();
-    if (!cmd) return;
+    if (!cmd) return null;
     const def = COMMANDS[cmd.type];
     const next = structuredClone(this.state);
     def.apply(next, cmd.payload);
@@ -219,6 +220,7 @@ class Store {
     this.history.pushPast(cmd);
     this.#persist();
     this.#notify();
+    return cmd;
   }
 
   canUndo() {
