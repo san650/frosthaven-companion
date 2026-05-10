@@ -1,0 +1,25 @@
+{
+  "name": "Frosthaven Companion",
+  "short_name": "Frosthaven",
+  "description": "Track your Frosthaven character sheet",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a2330",
+  "theme_color": "#1a2330",
+  "icons": [
+    {
+      "src": "./icons/app/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/app/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
