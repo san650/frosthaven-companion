@@ -15,6 +15,7 @@ const CLOSE_MS = 280;
 
 const ICONS = {
   notes:   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M16 4v3h3M8 11h8M8 15h8M8 19h5"/></svg>',
+  perks:   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5 5.5.8-4 3.9.9 5.5L12 15.8 7.1 18.2l.9-5.5-4-3.9 5.5-.8z"/><path d="M9 12l2 2 4-4"/></svg>',
   retired: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16l-1 11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 8z"/><path d="M9 8V5a3 3 0 0 1 6 0v3M10 13v4M14 13v4"/></svg>',
   export:  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>',
   import:  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 11l5 5 5-5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>',
@@ -127,6 +128,8 @@ const item = ({ icon, title, hint, danger, onActivate, href }) => {
 const buildSheet = () => {
   const state = store.state;
   const retiredCount = state.retired.length;
+  const perks = state.activeCharacter?.perks ?? [];
+  const earnedPerks = perks.filter(Boolean).length;
 
   const handle = el('div', { class: 'actions-drawer__handle', 'aria-hidden': 'true' });
 
@@ -151,6 +154,14 @@ const buildSheet = () => {
       // so the two sheets never overlap mid-animation.
       setTimeout(() => openNotesDrawer(), CLOSE_MS);
     },
+  });
+
+  const perksItem = item({
+    icon: ICONS.perks,
+    title: `Perks (${earnedPerks})`,
+    hint: 'Track earned perks',
+    href: '#/perks',
+    onActivate: () => close(),
   });
 
   const retiredItem = retiredCount > 0
@@ -205,7 +216,7 @@ const buildSheet = () => {
     role: 'dialog',
     'aria-modal': 'true',
     'aria-label': 'Actions',
-  }, handle, head, notesItem, retiredItem, exportItem, importItem, retireItem);
+  }, handle, head, notesItem, perksItem, retiredItem, exportItem, importItem, retireItem);
 };
 
 const ensureMount = () => {

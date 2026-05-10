@@ -1101,6 +1101,101 @@ a:hover { color: var(--frost-bright); }
 }
 .comments-area::placeholder { color: var(--ink-faint); font-style: italic; }
 
+/* ----------------------------- PERKS -------------------------------- */
+
+.view--perks { gap: 8px; }
+
+.perks-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 18 perks shown as 6 groups of 3 small checkboxes, laid out in a
+   2-column × 3-row grid. Each group is a faint vellum card so the three
+   boxes inside read as a set. */
+.perks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: minmax(0, auto);
+  gap: 12px 10px;
+  padding: 6px 0;
+}
+
+.perk-group {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 6px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(255,250,235,0.42), rgba(180,150,100,0.14));
+  box-shadow: inset 0 0 0 1px rgba(70, 50, 22, 0.32);
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+/* A group becomes "complete" when all three boxes are ticked — the
+   character has earned an ability. Warm gold halo + inset frame so the
+   row clearly reads as "unlocked", and a small star sits in the corner. */
+.perk-group--complete {
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(233, 204, 138, 0.55), transparent 70%),
+    linear-gradient(180deg, rgba(233, 204, 138, 0.42), rgba(125, 94, 45, 0.22));
+  box-shadow:
+    inset 0 0 0 1.5px rgba(125, 94, 45, 0.7),
+    inset 0 1px 0 rgba(255, 240, 200, 0.45),
+    0 0 0 1px rgba(233, 204, 138, 0.35),
+    0 0 14px -4px rgba(233, 204, 138, 0.75);
+}
+.perk-group--complete::after {
+  content: '★';
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  font-size: 0.7rem;
+  color: var(--gold-bright);
+  text-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(233, 204, 138, 0.8));
+}
+
+.perk-box {
+  width: 30px;
+  height: 30px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(255,250,235,0.72), rgba(180,150,100,0.22));
+  box-shadow:
+    inset 0 0 0 1.3px rgba(70, 50, 22, 0.6),
+    inset 0 -1px 0 rgba(70, 50, 22, 0.15);
+  transition: transform 0.1s ease, background 0.18s ease, color 0.18s ease;
+  flex: none;
+}
+.perk-box:active { transform: translateY(1px); }
+.perk-box--checked {
+  background-color: #5a8eaf;
+  background-image: linear-gradient(180deg, #3d6e92 0%, #6fa6c4 100%);
+  color: #f5fbff;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1.5px rgba(15, 30, 50, 0.7),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.18);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+@media (max-width: 360px) {
+  .perks-grid { gap: 10px 6px; }
+  .perk-group { padding: 6px 4px; gap: 4px; }
+  .perk-box { width: 26px; height: 26px; font-size: 0.9rem; }
+}
+
 /* --------------------------- RETIRED LIST --------------------------- */
 
 .view--retired { gap: 8px; }

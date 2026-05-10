@@ -24,8 +24,19 @@ import { History } from './history.js';
 import { loadState, saveState, requestPersistence } from './db.js';
 import { RESOURCES } from './data/resources.js';
 
+export const PERK_COUNT = 18;
+
 const emptyResources = () =>
   Object.fromEntries(RESOURCES.map((r) => [r.id, 0]));
+
+const emptyPerks = () => Array(PERK_COUNT).fill(false);
+
+const normalizePerks = (perks) => {
+  const base = emptyPerks();
+  if (!Array.isArray(perks)) return base;
+  for (let i = 0; i < PERK_COUNT; i++) base[i] = Boolean(perks[i]);
+  return base;
+};
 
 const newCharacter = (classId) => ({
   id: crypto.randomUUID(),
@@ -34,6 +45,7 @@ const newCharacter = (classId) => ({
   level: 1,
   xp: 0,
   resources: emptyResources(),
+  perks: emptyPerks(),
   comments: '',
   createdAt: Date.now(),
 });
@@ -69,6 +81,7 @@ class Store {
             ...emptyResources(),
             ...state.activeCharacter.resources,
           };
+          state.activeCharacter.perks = normalizePerks(state.activeCharacter.perks);
         }
         this.state = state;
       }
@@ -161,6 +174,7 @@ class Store {
         ...emptyResources(),
         ...next.activeCharacter.resources,
       };
+      next.activeCharacter.perks = normalizePerks(next.activeCharacter.perks);
     }
     this.state = next;
     this.history.clear();

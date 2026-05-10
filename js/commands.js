@@ -13,6 +13,15 @@ const setResource = (state, id, v) => {
   };
 };
 
+const setPerk = (state, index, v) => {
+  const current = Array.isArray(state.activeCharacter.perks)
+    ? state.activeCharacter.perks
+    : [];
+  const next = current.slice();
+  next[index] = v;
+  state.activeCharacter = { ...state.activeCharacter, perks: next };
+};
+
 export const COMMANDS = {
   SET_NAME: {
     apply: (s, p) => setActive(s, 'name', p.to),
@@ -38,6 +47,11 @@ export const COMMANDS = {
     apply: (s, p) => setActive(s, 'comments', p.to),
     revert: (s, p) => setActive(s, 'comments', p.from),
     coalesceKey: () => 'comments',
+  },
+  SET_PERK: {
+    apply: (s, p) => setPerk(s, p.index, p.to),
+    revert: (s, p) => setPerk(s, p.index, p.from),
+    coalesceKey: (p) => `perk:${p.index}`,
   },
 };
 

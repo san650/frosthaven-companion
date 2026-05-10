@@ -5,6 +5,7 @@ import { store } from './store.js';
 import { renderSelect } from './views/select.js';
 import { renderSheet } from './views/sheet.js';
 import { renderRetired } from './views/retired.js';
+import { renderPerks } from './views/perks.js';
 import { mountSnow } from './snow.js';
 
 const root = document.getElementById('view');
@@ -12,6 +13,7 @@ const root = document.getElementById('view');
 const route = () => {
   const hash = location.hash || '';
   if (hash.startsWith('#/retired')) return 'retired';
+  if (hash.startsWith('#/perks')) return 'perks';
   if (hash.startsWith('#/select')) return 'select';
   return store.state.activeCharacter ? 'sheet' : 'select';
 };
@@ -20,6 +22,7 @@ const render = () => {
   const r = route();
   const state = store.state;
   if (r === 'retired') return renderRetired(root, state);
+  if (r === 'perks' && state.activeCharacter) return renderPerks(root, state);
   if (r === 'sheet' && state.activeCharacter) return renderSheet(root, state);
   return renderSelect(root, state);
 };

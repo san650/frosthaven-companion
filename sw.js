@@ -1,7 +1,7 @@
 // Cache-first service worker for the app shell.
 // Bump CACHE on releases to evict stale assets.
 
-const CACHE = 'frosthaven-companion-v7';
+const CACHE = 'frosthaven-companion-v8';
 
 const SHELL = [
   './',
@@ -23,6 +23,7 @@ const SHELL = [
   './js/views/select.js',
   './js/views/sheet.js',
   './js/views/retired.js',
+  './js/views/perks.js',
   './js/views/notes-drawer.js',
   './js/views/actions-drawer.js',
 
