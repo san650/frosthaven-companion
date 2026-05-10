@@ -5,8 +5,9 @@ import { store } from './store.js';
 import { renderSelect } from './views/select.js';
 import { renderSheet } from './views/sheet.js';
 import { renderRetired } from './views/retired.js';
+import { mountSnow } from './snow.js';
 
-const root = document.getElementById('app');
+const root = document.getElementById('view');
 
 const route = () => {
   const hash = location.hash || '';
@@ -48,6 +49,7 @@ const onKeyDown = (e) => {
 
 const start = async () => {
   await store.ready;
+  mountSnow();
   store.subscribe(render);
   window.addEventListener('hashchange', render);
   window.addEventListener('keydown', onKeyDown);

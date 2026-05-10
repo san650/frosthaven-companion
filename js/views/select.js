@@ -1,61 +1,64 @@
-// Class selection view. Shown when there is no active character.
-// Two groups: starter classes first, unlockables below.
+// Class selection view. Two grids: starters (3 cols), unlockables (4 cols).
+// Decorative snowfall layer is added once and shared across views.
 
 import { STARTER_CLASSES, UNLOCKABLE_CLASSES } from '../data/classes.js';
 import { store } from '../store.js';
-import { svgEl } from '../dom.js';
+import { el, svgEl } from '../dom.js';
 
-const classButton = (cls) => {
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'class-tile';
-  btn.dataset.classId = cls.id;
+const classButton = (cls, index) => {
+  const btn = el('button', {
+    type: 'button',
+    class: 'class-tile',
+    dataset: { classId: cls.id },
+    onClick: () => store.startCharacter(cls.id),
+  });
+  btn.style.setProperty('--i', String(index));
 
-  const iconWrap = document.createElement('span');
-  iconWrap.className = 'class-tile__icon';
-  iconWrap.appendChild(svgEl(cls.iconSvg));
+  const sigil = el('span', { class: 'sigil class-tile__sigil' });
+  sigil.appendChild(svgEl(cls.iconSvg));
 
-  const nameEl = document.createElement('span');
-  nameEl.className = 'class-tile__name';
-  nameEl.textContent = cls.name;
-
-  btn.append(iconWrap, nameEl);
-  btn.addEventListener('click', () => store.startCharacter(cls.id));
+  btn.append(
+    sigil,
+    el('span', { class: 'class-tile__name', text: cls.name }),
+  );
   return btn;
 };
 
-const group = (heading, classes) => {
-  const section = document.createElement('section');
-  section.className = 'class-group';
-  const h = document.createElement('h2');
-  h.textContent = heading;
-  section.appendChild(h);
-  const grid = document.createElement('div');
-  grid.className = 'class-grid';
-  for (const cls of classes) grid.appendChild(classButton(cls));
-  section.appendChild(grid);
-  return section;
+const renderGroup = (heading, classes, modifierClass, indexOffset) => {
+  const grid = el('div', { class: `class-grid ${modifierClass}` });
+  classes.forEach((cls, i) => grid.appendChild(classButton(cls, indexOffset + i)));
+  return el('section', { class: 'class-group' },
+    el('h2', { text: heading }),
+    grid,
+  );
+};
+
+const renderHero = (state) => {
+  const hero = el('section', { class: 'select-hero' },
+    el('h1', { text: 'Frosthaven' }),
+    el('div', { class: 'rune' }, el('span', { text: 'Choose your destiny' })),
+  );
+  if (state.retired.length > 0) {
+    const link = el('a', {
+      href: '#/retired',
+      class: 'topbar__link',
+      text: `View Retired (${state.retired.length})`,
+    });
+    link.style.marginTop = '4px';
+    hero.appendChild(link);
+  }
+  return hero;
 };
 
 export const renderSelect = (root, state) => {
   root.replaceChildren();
-  const view = document.createElement('div');
-  view.className = 'view view--select';
 
-  const header = document.createElement('header');
-  header.className = 'topbar';
-  const title = document.createElement('h1');
-  title.textContent = 'Choose a Character';
-  header.appendChild(title);
-
-  if (state.retired.length > 0) {
-    const link = document.createElement('a');
-    link.href = '#/retired';
-    link.className = 'topbar__link';
-    link.textContent = `Retired (${state.retired.length})`;
-    header.appendChild(link);
-  }
-
-  view.append(header, group('Starter Classes', STARTER_CLASSES), group('Unlockable Classes', UNLOCKABLE_CLASSES));
+  const view = el('div', { class: 'view view--select' },
+    renderHero(state),
+    el('div', { class: 'select-scroll' },
+      renderGroup('Starter Classes', STARTER_CLASSES, '', 0),
+      renderGroup('Unlockable Classes', UNLOCKABLE_CLASSES, 'class-grid--unlocks', STARTER_CLASSES.length),
+    ),
+  );
   root.appendChild(view);
 };

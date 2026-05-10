@@ -1,42 +1,32 @@
 // Active character sheet. All edits dispatch commands so they're undoable.
+//
+// Layout target: fits a single mobile viewport with no body scroll.
+// - Topbar (class sigil, class name, retired link, undo/redo)
+// - Parchment panel containing: name, level row, XP stepper, gold stepper, resources
+// - Footer with Notes (opens drawer) + Retire buttons
+// - Comments live in a slide-up drawer, not inline
 
 import { getClass } from '../data/classes.js';
-import { RESOURCES } from '../data/resources.js';
+import { RESOURCES, getResource } from '../data/resources.js';
+import { LEVEL_XP, MAX_LEVEL } from '../data/xp-thresholds.js';
 import { store } from '../store.js';
 import { makeCommand } from '../commands.js';
 import { el, svgEl } from '../dom.js';
+import { openNotesDrawer } from './notes-drawer.js';
 
-const MAX_LEVEL = 9;
+const goldResource = () => getResource('gold');
+const nonGoldResources = () => RESOURCES.filter((r) => r.id !== 'gold');
 
-const fieldRow = (label, control) =>
-  el('div', { class: 'field' },
-    el('label', { class: 'field__label', text: label }),
-    control,
+/* ----------------------------- TOPBAR ------------------------------- */
+
+const renderTopbar = (cls) => {
+  const sigil = el('span', { class: 'sigil sigil--sm' });
+  sigil.appendChild(svgEl(cls.iconSvg));
+
+  const title = el('div', { class: 'topbar__title' },
+    sigil,
+    el('span', { class: 'topbar__class', text: cls.name }),
   );
-
-const counter = ({ value, min = 0, onChange, ariaLabel }) => {
-  const dec = el('button', {
-    type: 'button',
-    class: 'counter__btn',
-    'aria-label': `decrease ${ariaLabel}`,
-    text: '−',
-    onClick: () => onChange(Math.max(min, value - 1)),
-  });
-  const inc = el('button', {
-    type: 'button',
-    class: 'counter__btn',
-    'aria-label': `increase ${ariaLabel}`,
-    text: '+',
-    onClick: () => onChange(value + 1),
-  });
-  const display = el('span', { class: 'counter__value', text: String(value) });
-  return el('div', { class: 'counter', role: 'group', 'aria-label': ariaLabel }, dec, display, inc);
-};
-
-const renderTopbar = (cls, retiredCount) => {
-  const retiredLink = retiredCount > 0
-    ? el('a', { href: '#/retired', class: 'topbar__link', text: `Retired (${retiredCount})` })
-    : null;
 
   const undoBtn = el('button', {
     type: 'button',
@@ -56,115 +46,196 @@ const renderTopbar = (cls, retiredCount) => {
   });
   redoBtn.disabled = !store.canRedo();
 
-  const title = el('div', { class: 'topbar__title' });
-  const iconSpan = el('span', { class: 'topbar__icon' });
-  iconSpan.appendChild(svgEl(cls.iconSvg));
-  title.append(iconSpan, el('span', { text: cls.name }));
-
   return el('header', { class: 'topbar' },
     title,
-    el('div', { class: 'topbar__actions' },
-      retiredLink,
-      undoBtn,
-      redoBtn,
-    ),
+    el('div', { class: 'topbar__actions' }, undoBtn, redoBtn),
   );
 };
+
+/* --------------------------- NAME FIELD ----------------------------- */
 
 const renderName = (character) => {
   const input = el('input', {
     type: 'text',
-    class: 'input',
-    placeholder: 'Name your character',
+    class: 'name-input',
+    placeholder: 'name your character',
     'aria-label': 'Character name',
+    autocapitalize: 'words',
+    autocomplete: 'off',
+    spellcheck: 'false',
+    'data-focus-key': 'name',
   });
   input.value = character.name;
   input.addEventListener('input', () => {
-    store.dispatch(makeCommand('SET_NAME', { from: store.state.activeCharacter.name, to: input.value }));
+    store.dispatch(makeCommand('SET_NAME', {
+      from: store.state.activeCharacter.name,
+      to: input.value,
+    }));
   });
-  return fieldRow('Name', input);
+  return el('section', { class: 'sheet-section' }, input);
 };
+
+/* ---------------------------- LEVEL ROW ----------------------------- */
 
 const renderLevel = (character) => {
-  const ctl = counter({
-    value: character.level,
-    min: 1,
-    ariaLabel: 'level',
-    onChange: (to) => {
-      const clamped = Math.min(MAX_LEVEL, Math.max(1, to));
-      store.dispatch(makeCommand('SET_LEVEL', { from: store.state.activeCharacter.level, to: clamped }));
+  const cells = [];
+  for (let lvl = 1; lvl <= MAX_LEVEL; lvl++) {
+    const isActive = character.level === lvl;
+    const cell = el('button', {
+      type: 'button',
+      class: `level-cell${isActive ? ' level-cell--active' : ''}`,
+      'aria-label': `Level ${lvl}, requires ${LEVEL_XP[lvl]} XP`,
+      'aria-pressed': isActive ? 'true' : 'false',
+      onClick: () => {
+        store.dispatch(makeCommand('SET_LEVEL', {
+          from: store.state.activeCharacter.level,
+          to: lvl,
+        }));
+      },
     },
-  });
-  return fieldRow('Level', ctl);
+      el('span', { class: 'level-cell__box', text: String(lvl) }),
+      el('span', { class: 'level-cell__xp', text: String(LEVEL_XP[lvl]) }),
+    );
+    cells.push(cell);
+  }
+  return el('section', { class: 'sheet-section' },
+    el('div', { class: 'sheet-label', text: 'Level' }),
+    el('div', { class: 'level-track', role: 'radiogroup', 'aria-label': 'Level' }, ...cells),
+  );
 };
 
-const renderXp = (character) => {
-  const ctl = counter({
-    value: character.xp,
-    min: 0,
-    ariaLabel: 'experience',
-    onChange: (to) => {
-      store.dispatch(makeCommand('SET_XP', { from: store.state.activeCharacter.xp, to }));
+/* --------------------------- STAT STEPPER --------------------------- */
+
+const STEP_DELTAS = [-10, -1, 1, 10];
+
+const renderStat = ({ kind, label, value, iconSvg, onDelta }) => {
+  const iconWrap = el('span', { class: 'stat-head__icon' });
+  iconWrap.appendChild(svgEl(iconSvg));
+
+  const head = el('div', { class: 'stat-head' },
+    iconWrap,
+    el('span', { class: 'stat-head__label', text: label }),
+    el('span', { class: 'stat-head__value', text: String(value) }),
+  );
+
+  const buttons = STEP_DELTAS.map((delta) => {
+    const sign = delta > 0 ? '+' : '−';
+    const label = `${sign}${Math.abs(delta)}`;
+    return el('button', {
+      type: 'button',
+      class: `stepper__btn${delta < 0 ? ' stepper__btn--neg' : ''}${Math.abs(delta) === 1 ? ' stepper__btn--minor' : ''}`,
+      'aria-label': `${delta > 0 ? 'add' : 'subtract'} ${Math.abs(delta)}`,
+      text: label,
+      onClick: () => onDelta(delta),
+    });
+  });
+
+  return el('section', { class: `sheet-section stat-row stat-row--${kind}` },
+    head,
+    el('div', { class: 'stepper' }, ...buttons),
+  );
+};
+
+const renderXp = (character) => renderStat({
+  kind: 'xp',
+  label: 'Experience',
+  value: character.xp,
+  iconSvg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>',
+  onDelta: (delta) => {
+    const from = store.state.activeCharacter.xp;
+    const to = Math.max(0, from + delta);
+    store.dispatch(makeCommand('SET_XP', { from, to }));
+  },
+});
+
+const renderGold = (character) => {
+  const gold = goldResource();
+  return renderStat({
+    kind: 'gold',
+    label: 'Gold',
+    value: character.resources.gold ?? 0,
+    iconSvg: gold.iconSvg,
+    onDelta: (delta) => {
+      const from = store.state.activeCharacter.resources.gold ?? 0;
+      const to = Math.max(0, from + delta);
+      store.dispatch(makeCommand('SET_RESOURCE', { id: 'gold', from, to }));
     },
   });
-  return fieldRow('XP', ctl);
 };
+
+/* --------------------------- RESOURCES ------------------------------ */
 
 const renderResource = (resource, value) => {
-  const iconEl = el('span', { class: 'resource__icon' });
-  iconEl.appendChild(svgEl(resource.iconSvg));
+  const iconWrap = el('span', { class: 'resource__icon' });
+  iconWrap.appendChild(svgEl(resource.iconSvg));
 
-  const ctl = counter({
-    value,
-    min: 0,
-    ariaLabel: resource.name.toLowerCase(),
-    onChange: (to) => {
-      const from = store.state.activeCharacter.resources[resource.id];
+  const dec = el('button', {
+    type: 'button',
+    class: 'resource__btn resource__btn--neg',
+    'aria-label': `decrease ${resource.name}`,
+    text: '−',
+    onClick: () => {
+      const from = store.state.activeCharacter.resources[resource.id] ?? 0;
+      const to = Math.max(0, from - 1);
       store.dispatch(makeCommand('SET_RESOURCE', { id: resource.id, from, to }));
+    },
+  });
+  const inc = el('button', {
+    type: 'button',
+    class: 'resource__btn',
+    'aria-label': `increase ${resource.name}`,
+    text: '+',
+    onClick: () => {
+      const from = store.state.activeCharacter.resources[resource.id] ?? 0;
+      store.dispatch(makeCommand('SET_RESOURCE', { id: resource.id, from, to: from + 1 }));
     },
   });
 
   return el('div', { class: 'resource' },
     el('div', { class: 'resource__head' },
-      iconEl,
+      iconWrap,
       el('span', { class: 'resource__name', text: resource.name }),
     ),
-    ctl,
+    el('div', { class: 'resource__row' },
+      dec,
+      el('span', { class: 'resource__value', text: String(value) }),
+      inc,
+    ),
   );
 };
 
 const renderResources = (character) => {
   const grid = el('div', { class: 'resources' },
-    ...RESOURCES.map((r) => renderResource(r, character.resources[r.id] ?? 0)),
+    ...nonGoldResources().map((r) => renderResource(r, character.resources[r.id] ?? 0)),
   );
-  return el('section', { class: 'section' },
-    el('h2', { class: 'section__title', text: 'Resources' }),
+  return el('section', { class: 'sheet-section' },
+    el('div', { class: 'sheet-label', text: 'Resources' }),
     grid,
   );
 };
 
-const renderComments = (character) => {
-  const ta = el('textarea', {
-    class: 'textarea',
-    rows: '5',
-    placeholder: 'Notes, perks, items, story...',
-    'aria-label': 'Comments',
-  });
-  ta.value = character.comments;
-  ta.addEventListener('input', () => {
-    store.dispatch(makeCommand('SET_COMMENTS', { from: store.state.activeCharacter.comments, to: ta.value }));
-  });
-  return el('section', { class: 'section' },
-    el('h2', { class: 'section__title', text: 'Comments' }),
-    ta,
-  );
-};
+/* ----------------------------- FOOTER ------------------------------- */
 
-const renderRetire = () => {
-  const btn = el('button', {
+const renderFooter = (retiredCount) => {
+  const notesBtn = el('button', {
     type: 'button',
-    class: 'btn btn--danger',
-    text: 'Retire Character',
+    class: 'foot__btn foot__btn--notes',
+    text: 'Notes',
+    onClick: () => openNotesDrawer(),
+  });
+
+  const retiredLink = retiredCount > 0
+    ? el('a', {
+        href: '#/retired',
+        class: 'foot__btn foot__btn--retired',
+        text: `Retired (${retiredCount})`,
+      })
+    : null;
+
+  const retireBtn = el('button', {
+    type: 'button',
+    class: 'foot__btn foot__btn--retire',
+    text: 'Retire',
     onClick: () => {
       const name = store.state.activeCharacter.name || 'this character';
       if (confirm(`Retire ${name}? They'll be archived and you can choose a new class.`)) {
@@ -172,15 +243,18 @@ const renderRetire = () => {
       }
     },
   });
-  return el('section', { class: 'section section--actions' }, btn);
+
+  return el('div', { class: 'foot' }, notesBtn, retiredLink, retireBtn);
 };
+
+/* ----------------------------- ROOT --------------------------------- */
 
 export const renderSheet = (root, state) => {
   const c = state.activeCharacter;
   if (!c) return;
   const cls = getClass(c.classId);
 
-  // Preserve focus + caret across re-renders for text inputs.
+  // Preserve focus + caret across re-renders for the name field.
   const active = document.activeElement;
   const activeKey = active?.dataset?.focusKey;
   const selStart = active?.selectionStart;
@@ -189,20 +263,16 @@ export const renderSheet = (root, state) => {
   root.replaceChildren();
 
   const view = el('div', { class: 'view view--sheet' },
-    renderTopbar(cls, state.retired.length),
-    el('section', { class: 'section' },
+    renderTopbar(cls),
+    el('div', { class: 'sheet-panel' },
       renderName(c),
       renderLevel(c),
       renderXp(c),
+      renderGold(c),
+      renderResources(c),
     ),
-    renderResources(c),
-    renderComments(c),
-    renderRetire(),
+    renderFooter(state.retired.length),
   );
-
-  // Tag focusable text fields so we can restore focus after re-render.
-  view.querySelector('input.input')?.setAttribute('data-focus-key', 'name');
-  view.querySelector('textarea.textarea')?.setAttribute('data-focus-key', 'comments');
 
   root.appendChild(view);
 

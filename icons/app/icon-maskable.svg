@@ -1,7 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#1a2330"/>
-  <g fill="none" stroke="#a8c5e0" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M256 144 L 256 368 M 176 208 L 256 256 L 336 208 M 176 304 L 256 256 L 336 304"/>
-    <circle cx="256" cy="256" r="32" fill="#1a2330"/>
+  <!-- Maskable: keep important content within the central 40% safe zone. -->
+  <rect width="512" height="512" fill="#0a1424"/>
+  <g transform="translate(256 256)" stroke="#bfdef0" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g id="arm">
+      <line x1="0" y1="0" x2="0" y2="-110"/>
+      <line x1="0" y1="-42" x2="-18" y2="-58"/>
+      <line x1="0" y1="-42" x2="18" y2="-58"/>
+      <line x1="0" y1="-74" x2="-12" y2="-86"/>
+      <line x1="0" y1="-74" x2="12" y2="-86"/>
+      <line x1="0" y1="-102" x2="-7" y2="-110"/>
+      <line x1="0" y1="-102" x2="7" y2="-110"/>
+    </g>
+    <use href="#arm" transform="rotate(60)"/>
+    <use href="#arm" transform="rotate(120)"/>
+    <use href="#arm" transform="rotate(180)"/>
+    <use href="#arm" transform="rotate(240)"/>
+    <use href="#arm" transform="rotate(300)"/>
+    <circle r="16" fill="#0a1424" stroke="#d6ecf8" stroke-width="2.4"/>
+    <circle r="5" fill="#d6ecf8" stroke="none"/>
   </g>
 </svg>

@@ -1,4 +1,5 @@
-// Read-only list of retired characters.
+// Read-only list of retired characters. Header is fixed, the list scrolls
+// inside its own container so the body itself never scrolls.
 
 import { getClass } from '../data/classes.js';
 import { RESOURCES } from '../data/resources.js';
@@ -8,8 +9,8 @@ const formatDate = (ts) => new Date(ts).toLocaleDateString();
 
 const retiredCard = (character) => {
   const cls = getClass(character.classId);
-  const icon = el('span', { class: 'retired__icon' });
-  if (cls) icon.appendChild(svgEl(cls.iconSvg));
+  const sigil = el('span', { class: 'sigil retired__sigil' });
+  if (cls) sigil.appendChild(svgEl(cls.iconSvg));
 
   const name = character.name || '(unnamed)';
   const className = cls?.name ?? character.classId;
@@ -20,13 +21,13 @@ const retiredCard = (character) => {
     .join(' · ');
 
   const card = el('article', { class: 'retired' },
+    el('span', { class: 'retired__stamp', text: 'Retired' }),
     el('div', { class: 'retired__head' },
-      icon,
+      sigil,
       el('div', { class: 'retired__title' },
         el('div', { class: 'retired__name', text: name }),
-        el('div', { class: 'retired__sub', text: `${className} · Lvl ${character.level} · ${character.xp} XP` }),
+        el('div', { class: 'retired__sub', text: `${className} · Lvl ${character.level} · ${character.xp} XP · ${formatDate(character.retiredAt)}` }),
       ),
-      el('div', { class: 'retired__date', text: `Retired ${formatDate(character.retiredAt)}` }),
     ),
   );
 
@@ -42,20 +43,19 @@ const retiredCard = (character) => {
 export const renderRetired = (root, state) => {
   root.replaceChildren();
 
-  // Send the user "home" — sheet if there's an active character, else select.
   const back = el('a', { href: '#/', class: 'topbar__link', text: '← Back' });
-  const title = el('h1', { text: 'Retired Characters' });
+  const title = el('h1', { text: 'Retired' });
   const header = el('header', { class: 'topbar' }, back, title);
 
   const view = el('div', { class: 'view view--retired' }, header);
 
+  const list = el('div', { class: 'retired-scroll' });
   if (state.retired.length === 0) {
-    view.appendChild(el('p', { class: 'empty', text: 'No retired characters yet.' }));
+    list.appendChild(el('p', { class: 'empty', text: 'No retired characters yet.' }));
   } else {
-    const list = el('div', { class: 'retired-list' });
     for (const c of state.retired) list.appendChild(retiredCard(c));
-    view.appendChild(list);
   }
+  view.appendChild(list);
 
   root.appendChild(view);
 };
