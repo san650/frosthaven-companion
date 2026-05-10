@@ -1287,6 +1287,155 @@ a:hover { color: var(--frost-bright); }
   font-weight: 500;
 }
 
+/* ----------------------------- LOG VIEW ----------------------------- */
+
+/* The log lives on a parchment panel (consistent with Perks). Each row
+   is a single ledger line — time gutter on the left, label, dotted
+   leader filling the middle, then the value flush-right. The leader
+   does the visual alignment work (classic typography move). */
+
+.view--log { gap: 8px; }
+
+.log-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.log-panel__title {
+  flex: none;
+  padding: 2px 4px 4px;
+  border-bottom: 1px solid rgba(120, 92, 50, 0.28);
+}
+.log-list {
+  display: flex;
+  flex-direction: column;
+  padding: 2px 0;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 44px auto minmax(16px, 1fr) auto;
+  align-items: baseline;
+  column-gap: 10px;
+  padding: 10px 4px;
+  color: var(--ink);
+  position: relative;
+}
+.log-entry + .log-entry::before {
+  /* hairline divider drawn between rows, inset slightly from the edges */
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 4px;
+  right: 4px;
+  height: 1px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(80, 55, 18, 0.32) 0 4px,
+      transparent 4px 7px
+    );
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.log-entry__time {
+  font-family: var(--font-body);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--frost-shadow);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.log-entry__label {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* Dotted leader fills the gap between label and value, aligning rows
+   visually without needing fixed column widths. */
+.log-entry__leader {
+  align-self: center;
+  height: 5px;
+  background-image: radial-gradient(circle at center, rgba(80, 55, 18, 0.55) 0.85px, transparent 1.6px);
+  background-size: 6px 100%;
+  background-repeat: repeat-x;
+  background-position: 0 50%;
+  opacity: 0.55;
+}
+
+.log-entry__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-family: var(--font-display);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  font-size: 1.1rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  justify-self: end;
+  min-width: 0;
+}
+.log-entry__value--num .log-entry__from {
+  color: var(--ink-faint);
+  font-size: 0.82em;
+}
+.log-entry__value--num .log-entry__arrow {
+  color: var(--ink-faint);
+  font-size: 0.8em;
+  padding: 0 1px;
+}
+.log-entry__value--num .log-entry__to {
+  color: var(--ink);
+  font-weight: 600;
+}
+.log-entry__value--text {
+  font-family: var(--font-script);
+  font-style: italic;
+  font-size: 1.02rem;
+  color: var(--ink);
+  max-width: 48vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.log-entry__value--flag {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.log-entry__value--flag.log-entry__value--on  { color: var(--frost-shadow); }
+.log-entry__value--flag.log-entry__value--off { color: var(--ink-faint); }
+
+.log-empty {
+  font-family: var(--font-script);
+  font-style: italic;
+  color: var(--ink-faint);
+  text-align: center;
+  padding: 40px 16px;
+  margin: 0;
+}
+
+@media (max-width: 360px) {
+  .log-entry { column-gap: 8px; grid-template-columns: 38px auto minmax(10px, 1fr) auto; }
+  .log-entry__label { font-size: 0.7rem; letter-spacing: 0.14em; }
+  .log-entry__value { font-size: 1rem; }
+  .log-entry__value--text { max-width: 42vw; }
+}
+
 /* ----------------------------- TOAST -------------------------------- */
 
 /* Slides up from the bottom for undo/redo feedback. Sits above the
