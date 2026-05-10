@@ -757,7 +757,7 @@ a:hover { color: var(--frost-bright); }
   justify-content: center;
   color: var(--ink);
   flex: none;
-  margin-left: -10px;
+  margin-left: 2px;
   background:
     radial-gradient(circle at 35% 28%, rgba(255,250,235,0.95) 0%, rgba(220,196,150,0.78) 55%, rgba(120,90,40,0.55) 100%);
   box-shadow:
@@ -1222,7 +1222,7 @@ a:hover { color: var(--frost-bright); }
   .resource__btn { width: 32px; height: 32px; font-size: 1.05rem; }
   .resource__value { font-size: 1.25rem; }
   .resource__name { font-size: 0.88rem; }
-  .resource__icon { width: 36px; height: 36px; margin-left: -8px; }
+  .resource__icon { width: 36px; height: 36px; }
   .resource__icon svg { width: 22px; height: 22px; }
 }
 @media (max-width: 360px) {
@@ -1231,7 +1231,7 @@ a:hover { color: var(--frost-bright); }
   .level-cell__xp { font-size: 0.68rem; }
   .resource__name { font-size: 0.84rem; }
   .resource__btn { width: 30px; height: 30px; }
-  .resource__icon { width: 32px; height: 32px; margin-left: -6px; }
+  .resource__icon { width: 32px; height: 32px; }
   .resource__icon svg { width: 20px; height: 20px; }
   .stepper__btn { font-size: 0.72rem; padding: 0 2px; }
   .stat-row__head { width: 134px; gap: 6px; }
