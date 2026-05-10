@@ -732,6 +732,9 @@ a:hover { color: var(--frost-bright); }
   flex-direction: column;
   gap: 5px;
   align-content: start;
+  /* Reserve room beneath so the floating ^ button never sits over
+     the last visible pill. */
+  padding-bottom: 50px;
 }
 .resource {
   display: grid;
@@ -746,29 +749,17 @@ a:hover { color: var(--frost-bright); }
     inset 0 0 0 1px rgba(70, 50, 22, 0.45),
     0 1px 0 rgba(255,255,255,0.18);
 }
-/* The icon medallion: a frosted-amber coin sitting on the left,
-   slightly oversized and offset so it pokes past the pill's left edge —
-   makes each resource unmistakable at a glance. */
 .resource__icon {
-  width: 40px; height: 40px;
-  border-radius: 50%;
+  width: 26px; height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: var(--ink);
   flex: none;
-  margin-left: 2px;
-  background:
-    radial-gradient(circle at 35% 28%, rgba(255,250,235,0.95) 0%, rgba(220,196,150,0.78) 55%, rgba(120,90,40,0.55) 100%);
-  box-shadow:
-    inset 0 0 0 1.4px rgba(70, 50, 22, 0.6),
-    inset 0 -2px 4px rgba(70, 50, 22, 0.28),
-    0 1px 0 rgba(255,255,255,0.4),
-    0 3px 8px -2px rgba(0,0,0,0.35);
 }
 .resource__icon svg {
-  width: 24px;
-  height: 24px;
+  width: 100%;
+  height: 100%;
   stroke-width: 1.6;
 }
 .resource__name {
@@ -824,58 +815,56 @@ a:hover { color: var(--frost-bright); }
 
 /* ----------------------------- FOOTER ------------------------------- */
 
-/* The footer is now a single small chevron tab that reveals the actions
-   drawer (Notes, Retired, Retire). Centred so the thumb naturally rests
-   over it; subtle nudge animation hints it's tappable. */
+/* The actions toggle is now a small floating round button (FAB) that
+   hovers above the parchment so the resources list can claim the full
+   panel height. Frosted-glass treatment lets the parchment ghost
+   through, anchoring it visually to the sheet rather than the frame. */
 .foot {
-  flex: none;
-  display: flex;
-  justify-content: center;
-  padding-top: 6px;
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
+  z-index: 5;
+  padding: 0;
+  pointer-events: none; /* let the button accept events directly */
 }
 .actions-toggle {
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 30px;
-  border-radius: 18px 18px 4px 4px;
-  background:
-    linear-gradient(180deg, var(--slate-frost) 0%, var(--midnight-2) 100%);
-  color: var(--frost);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
   border: 0;
+  color: var(--ink-soft);
+  /* Translucent vellum that blends into the parchment; the dark
+     parchment grain shows through so the button reads as part of the
+     sheet, not an alert sitting on top of it. */
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 248, 225, 0.45), rgba(180, 150, 100, 0.32) 70%, rgba(120, 90, 40, 0.28));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   box-shadow:
-    inset 0 0 0 1px var(--slate-edge),
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    0 -3px 16px -4px rgba(159, 207, 235, 0.22),
-    0 3px 0 rgba(0,0,0,0.45);
-  transition: color 0.15s ease, transform 0.12s ease, box-shadow 0.2s ease;
+    inset 0 0 0 1px rgba(70, 50, 22, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 2px 6px -2px rgba(0, 0, 0, 0.28);
+  transition: color 0.15s ease, transform 0.12s ease, box-shadow 0.2s ease, background 0.18s ease;
+  animation: tab-nudge 5s ease-in-out infinite;
   position: relative;
-  animation: tab-nudge 4.5s ease-in-out infinite;
-}
-.actions-toggle::before {
-  /* faint frost crackle line above the tab */
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(159, 207, 235, 0.5), transparent);
-  pointer-events: none;
 }
 .actions-toggle:hover {
-  color: var(--frost-bright);
-  transform: translateY(-2px);
+  color: var(--ink);
+  transform: translateY(-1px);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 248, 225, 0.65), rgba(180, 150, 100, 0.42) 70%, rgba(120, 90, 40, 0.36));
   box-shadow:
-    inset 0 0 0 1px var(--slate-edge),
-    inset 0 1px 0 rgba(255,255,255,0.05),
-    0 -3px 22px -4px rgba(159, 207, 235, 0.45),
-    0 3px 0 rgba(0,0,0,0.45);
+    inset 0 0 0 1px rgba(70, 50, 22, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 4px 10px -2px rgba(0, 0, 0, 0.32);
 }
 .actions-toggle:active { transform: translateY(0); }
-.actions-toggle svg { width: 22px; height: 12px; }
+.actions-toggle svg { width: 16px; height: 10px; }
 
 @keyframes tab-nudge {
   0%, 70%, 100% { transform: translateY(0); }
@@ -1222,8 +1211,7 @@ a:hover { color: var(--frost-bright); }
   .resource__btn { width: 32px; height: 32px; font-size: 1.05rem; }
   .resource__value { font-size: 1.25rem; }
   .resource__name { font-size: 0.88rem; }
-  .resource__icon { width: 36px; height: 36px; }
-  .resource__icon svg { width: 22px; height: 22px; }
+  .resource__icon { width: 22px; height: 22px; }
 }
 @media (max-width: 360px) {
   :root { --gutter: 10px; }
@@ -1231,8 +1219,7 @@ a:hover { color: var(--frost-bright); }
   .level-cell__xp { font-size: 0.68rem; }
   .resource__name { font-size: 0.84rem; }
   .resource__btn { width: 30px; height: 30px; }
-  .resource__icon { width: 32px; height: 32px; }
-  .resource__icon svg { width: 20px; height: 20px; }
+  .resource__icon { width: 20px; height: 20px; }
   .stepper__btn { font-size: 0.72rem; padding: 0 2px; }
   .stat-row__head { width: 134px; gap: 6px; }
 }
