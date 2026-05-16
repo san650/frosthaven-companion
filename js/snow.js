@@ -1,6 +1,7 @@
-// Decorative snowfall — mounted once inside the app shell so it sits
-// behind the views but above the body background, allowing the parchment
-// panel (with rgba transparency) to show snow drifting through it.
+// Decorative snowfall — mounted once on <body> as a position-fixed
+// layer so it fills the entire viewport (including under the iOS home
+// indicator on installed PWAs). The translucent parchment panel lets
+// snow drift visibly behind the page content.
 // Pure CSS animation; flakes are positioned with deterministic
 // pseudo-random offsets so the scene looks the same on every reload.
 
@@ -26,6 +27,5 @@ export const mountSnow = () => {
     flake.style.setProperty('--drift', `${drift}px`);
     snow.appendChild(flake);
   }
-  const host = document.querySelector('.app') ?? document.body;
-  host.prepend(snow);
+  document.body.prepend(snow);
 };

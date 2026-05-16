@@ -113,7 +113,6 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  background: var(--midnight);
   color: var(--frost-bright);
   font-family: var(--font-body);
   font-size: 16px;
@@ -122,17 +121,22 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
-html { height: 100dvh; }
-body {
+/* Background lives on <html> so it paints the entire canvas (viewport),
+   including the area beneath the iOS home indicator when running as an
+   installed PWA with viewport-fit=cover. */
+html {
   height: 100dvh;
-  /* Lock the body — only specific scroll containers may scroll. */
-  overflow: hidden;
-  position: relative;
   background:
     radial-gradient(ellipse 80% 60% at 50% -10%, rgba(159, 207, 235, 0.07), transparent 60%),
     radial-gradient(ellipse 100% 80% at 50% 110%, rgba(74, 122, 152, 0.10), transparent 65%),
     radial-gradient(ellipse 120% 80% at 50% 50%, var(--midnight-2) 0%, var(--ink-black) 100%),
     var(--midnight);
+}
+body {
+  height: 100dvh;
+  /* Lock the body — only specific scroll containers may scroll. */
+  overflow: hidden;
+  position: relative;
 }
 /* Body has no padding; .app handles all safe-area insets so we don't
    double-pad. */
@@ -437,11 +441,12 @@ a:hover { color: var(--frost-bright); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* snowfall (decorative). Mounted inside .app so it sits behind .view
-   but above the body bg — letting the translucent parchment panel show
-   snow drifting through it. */
+/* snowfall (decorative). Position-fixed so it fills the entire viewport
+   — including the area beneath the iOS home indicator on installed PWAs
+   — rather than being constrained to the .app box. Sits behind .app
+   (z-index 1) but above the body background. */
 .snow {
-  position: absolute;
+  position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
