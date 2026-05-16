@@ -121,29 +121,48 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
 }
-/* Background lives on <html> so it paints the entire canvas (viewport),
-   including the area beneath the iOS home indicator when running as an
-   installed PWA with viewport-fit=cover. */
+/* Solid fallback so the canvas is dark even before the gradient layer
+   below paints (e.g., briefly at PWA boot, behind the splash). */
 html {
   height: 100dvh;
+  background: var(--midnight);
+}
+body {
+  height: 100dvh;
+  /* Lock the body — only specific scroll containers may scroll. body's
+     overflow:hidden also contains the over-extended background and snow
+     layers below so they never leak into a scrollbar or document flow. */
+  overflow: hidden;
+  position: relative;
+}
+/* Background gradient as a fixed layer that intentionally extends past
+   the viewport edges. On iOS installed PWAs with viewport-fit=cover the
+   visual viewport (100dvh) is shorter than the physical screen — there's
+   a strip beneath where Safari's URL bar would be that 100dvh doesn't
+   reach. Over-extending the bounds paints that strip too. */
+body::after {
+  content: '';
+  position: fixed;
+  top: -100px;
+  bottom: -200px;
+  left: -50px;
+  right: -50px;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(ellipse 80% 60% at 50% -10%, rgba(159, 207, 235, 0.07), transparent 60%),
     radial-gradient(ellipse 100% 80% at 50% 110%, rgba(74, 122, 152, 0.10), transparent 65%),
     radial-gradient(ellipse 120% 80% at 50% 50%, var(--midnight-2) 0%, var(--ink-black) 100%),
     var(--midnight);
 }
-body {
-  height: 100dvh;
-  /* Lock the body — only specific scroll containers may scroll. */
-  overflow: hidden;
-  position: relative;
-}
-/* Body has no padding; .app handles all safe-area insets so we don't
-   double-pad. */
+/* Noise overlay — over-extended for the same reason as the gradient. */
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
+  top: -100px;
+  bottom: -200px;
+  left: -50px;
+  right: -50px;
   pointer-events: none;
   z-index: 0;
   opacity: 0.16;
@@ -441,13 +460,16 @@ a:hover { color: var(--frost-bright); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* snowfall (decorative). Position-fixed so it fills the entire viewport
-   — including the area beneath the iOS home indicator on installed PWAs
-   — rather than being constrained to the .app box. Sits behind .app
-   (z-index 1) but above the body background. */
+/* snowfall (decorative). Position-fixed and over-extended past viewport
+   bounds so it fills the area beneath the iOS home indicator on
+   installed PWAs (which is on-screen but outside 100dvh). overflow:hidden
+   keeps stray flakes clipped to the layer's own box. */
 .snow {
   position: fixed;
-  inset: 0;
+  top: -100px;
+  bottom: -200px;
+  left: -50px;
+  right: -50px;
   pointer-events: none;
   z-index: 0;
   overflow: hidden;

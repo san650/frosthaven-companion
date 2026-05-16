@@ -1,7 +1,7 @@
 // Cache-first service worker for the app shell.
 // Bump CACHE on releases to evict stale assets.
 
-const CACHE = 'frosthaven-companion-v12';
+const CACHE = 'frosthaven-companion-v14';
 
 const SHELL = [
   './',
@@ -34,6 +34,16 @@ const SHELL = [
   './icons/app/icon-180.svg',
   './icons/app/icon-maskable.svg',
   './icons/app/splash.svg',
+  './icons/app/splash/splash-1290x2796.png',
+  './icons/app/splash/splash-1284x2778.png',
+  './icons/app/splash/splash-1179x2556.png',
+  './icons/app/splash/splash-1170x2532.png',
+  './icons/app/splash/splash-1125x2436.png',
+  './icons/app/splash/splash-1242x2688.png',
+  './icons/app/splash/splash-828x1792.png',
+  './icons/app/splash/splash-1242x2208.png',
+  './icons/app/splash/splash-750x1334.png',
+  './icons/app/splash/splash-640x1136.png',
 
   // self-hosted fonts
   './fonts/crimson-pro.woff2',
